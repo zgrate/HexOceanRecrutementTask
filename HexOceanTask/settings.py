@@ -45,10 +45,12 @@ INSTALLED_APPS = [
     'images.apps.ImagesConfig',
     'tiers.apps.TiersConfig',
     'rest_framework',
-    'django_cleanup.apps.CleanupConfig'
+    'django_cleanup.apps.CleanupConfig',
+    'django_seed',
 ]
 
 MIDDLEWARE = [
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -56,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware'
 ]
 
 ROOT_URLCONF = 'HexOceanTask.urls'
@@ -135,3 +138,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MEDIA_ROOT = "media"
 
 MEDIA_URL = "images/view/"
+
+# Defines default tier for every user
+DEFAULT_TIER = "Basic"
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': './django_cache',
+    }
+}
+
+CATCH_DURATION = 60*5
+
+DEFAULT_EXPIRE_TIME = 300

@@ -5,13 +5,18 @@ from PIL import Image as PilImg
 from django.apps import AppConfig
 from django.core.files import File
 from django.core.files.storage import default_storage
+from django.utils import timezone
+
 
 DEFAULT_IMAGE = "default.jpg"
 
 
 class ImagesConfig(AppConfig):
+
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'images'
+
+
 
     def ready(self):
         global DEFAULT_IMAGE
