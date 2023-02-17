@@ -10,6 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+
+import environ
+
+env = environ.Env()
+environ.Env.read_env()
+
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,17 +27,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ye3ptwl0wb7w#4$81r$t_^0$c)&m%y$d48tv@4h+^tq%3d9-v6'
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env("DEBUG") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.localhost', '127.0.0.1', '[::1]']
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
     ]
 }
 # Application definition
@@ -88,8 +94,12 @@ WSGI_APPLICATION = 'HexOceanTask.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': env('DATABASE_ENGINE'),
+        'NAME': env("DATABASE_NAME"),
+        'USER': env("DATABASE_USER"),
+        'PASSWORD': env("DATABASE_PASSWORD"),
+        'HOST': env("DATABASE_HOST"),
+        'PORT': env("DATABASE_PORT"),
     }
 }
 
@@ -118,7 +128,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = env("TIMEZONE")
 
 USE_I18N = True
 
@@ -135,20 +145,20 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-MEDIA_ROOT = "media"
+MEDIA_ROOT = env("MEDIA_ROOT_FOLDER")
 
 MEDIA_URL = "images/view/"
 
 # Defines default tier for every user
-DEFAULT_TIER = "Basic"
+DEFAULT_TIER = env("DEFAULT_TIER")
 
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': './django_cache',
+        'LOCATION': env("FILE_BASED_CACHE_LOCATION"),
     }
 }
 
 CATCH_DURATION = 60*5
 
-DEFAULT_EXPIRE_TIME = 300
+DEFAULT_EXPIRE_TIME = env('DEFAULT_EXPIRE_TIME')
