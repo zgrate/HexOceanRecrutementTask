@@ -1,37 +1,26 @@
 import io
 import logging
-import random
-import tempfile
-import traceback
 import uuid
-from datetime import datetime
 from io import BytesIO
-from os import path
 
+from PIL import Image as PilImg, UnidentifiedImageError
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
-from django.core.files.storage import DefaultStorage, default_storage
-from django.core.files.temp import NamedTemporaryFile
-from django.http import HttpResponse, JsonResponse, FileResponse, HttpResponseForbidden
-from django.shortcuts import render
+from django.core.files.storage import default_storage
+from django.http import JsonResponse, FileResponse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from django.views.decorators.vary import vary_on_headers
-from rest_framework import permissions, status
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.decorators import permission_classes, api_view, authentication_classes
-from rest_framework.parsers import JSONParser, FileUploadParser
+from rest_framework import status
+from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.reverse import reverse
+from rest_framework.status import HTTP_403_FORBIDDEN
 from rest_framework.views import APIView
 
+from HexOceanTask.settings import MIN_EXPIRE_TIME
 from images.models import Image, ExpiringImage
 from images.paginations import ImagesPagination
-from images.serializer import ImageSerializer, ImageUploadSerializer, ImageViewSerializer
-
-from PIL import Image as PilImg
-
+from images.serializer import ImageViewSerializer
 from tiers.models import UserInTier
 
 
@@ -39,6 +28,8 @@ from tiers.models import UserInTier
 
 class ImageAdmin(APIView):
     pagination_class = ImagesPagination
+    authentication_classes = [BasicAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         tier = UserInTier.objects.get_or_create(user=request.user)[0].tier
@@ -46,27 +37,57 @@ class ImageAdmin(APIView):
                                                 context={"tier": tier}).data,
                             safe=False)
 
+    def put(self, request):
+        try:
+            if len(request.FILES) > 0:
+                image = request.FILES["image"]
+                if image:
+                    try:
+                        img = PilImg.open(image)
+                        image_type = img.format
+                    except (UnidentifiedImageError, FileNotFoundError):
+                        return JsonResponse({"detail": "invalid_image"}, status=status.HTTP_400_BAD_REQUEST)
+
+                    image_id = uuid.uuid1().hex
+                    image._name = image_id
+                    img = Image(original_image=image, upload_date=timezone.now(), image_owner=request.user,
+                                image_type=f"image/{image_type.lower()}")
+                    img.save()
+                    return JsonResponse({"detail": "success", "image_id": image_id}, status=status.HTTP_201_CREATED)
+            else:
+                return JsonResponse({"detail": "image_not_found"}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logging.error(f"Exception while processing the request", e)
+            return JsonResponse({"detail": "internal_server_error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class ImageExpire(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [BasicAuthentication]
 
     def post(self, request):
-        if "image_id" not in request.query_params:
+
+        tier = UserInTier.objects.get_or_create(user=request.user)[0].tier
+        if not tier.can_generate_expire_links:
+            return JsonResponse({"detail": "tier_too_low"}, status=status.HTTP_403_FORBIDDEN)
+
+        if "image_id" not in request.data:
             return JsonResponse({"detail": "no_image_id"}, status=status.HTTP_400_BAD_REQUEST)
-        image_id = request.query_params['image_id']
+        image_id = request.data['image_id']
         img = Image.objects.filter(original_image=image_id, image_owner=request.user)
-        print(img)
         if not img.exists():
             return JsonResponse({"detail": "image_not_found"}, status=status.HTTP_400_BAD_REQUEST)
 
         expire_time = settings.DEFAULT_EXPIRE_TIME
-        if "expire_time" in request.query_params:
-            expire_time = request.query_params['expire_time']
+        if "expire_time" in request.data:
+            expire_time = int(request.data['expire_time'])
+            if expire_time < settings.MIN_EXPIRE_TIME:
+                return JsonResponse({"detail": "expire_must_be_above", "value": settings.MIN_EXPIRE_TIME}, status=status.HTTP_400_BAD_REQUEST)
+            if expire_time > settings.MAX_EXPIRE_TIME:
+                return JsonResponse({"detail": "expire_must_be_below", "value": settings.MAX_EXPIRE_TIME}, status=status.HTTP_400_BAD_REQUEST)
 
         time_future = timezone.now() + timezone.timedelta(seconds=expire_time)
 
-        print(time_future - timezone.now())
         expiry = ExpiringImage(image=img.first(), expiring_image_uuid=uuid.uuid1().hex, creation_date=timezone.now(),
                                expire_time=time_future)
         expiry.save()
@@ -99,6 +120,9 @@ class ImageView(APIView):
                 return JsonResponse({"detail": "tier_too_low"}, status=status.HTTP_403_FORBIDDEN)
         else:
             new_height = int(size)
+            if not tier.allowed_sizes.filter(height=new_height).exists():
+                return JsonResponse({"detail": "size_not_supported"}, status=status.HTTP_403_FORBIDDEN)
+
             temp_file = f"{image.original_image.name}_{new_height}"
             if not default_storage.exists("temp/" + temp_file):
                 image.original_image.open()
@@ -108,39 +132,6 @@ class ImageView(APIView):
                 out_file = BytesIO()
                 new_img.save(out_file, "JPEG")
                 out_file.seek(io.SEEK_SET)
-                default_storage.save("temp/"+temp_file, out_file)
+                default_storage.save("temp/" + temp_file, out_file)
 
-            return FileResponse(default_storage.open("temp/"+temp_file), content_type="image/jpeg")
-
-
-class ImageManage(APIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [BasicAuthentication]
-    serializer_class = [ImageUploadSerializer]
-
-    def put(self, request):
-        try:
-            if len(request.FILES) > 0:
-                image = request.FILES["image"]
-                print(repr(image))
-                if image:
-                    try:
-                        img = PilImg.open(image)
-                        image_type = img.format
-                    except Exception as e:
-                        print(e)
-                        print(traceback.print_tb(e.__traceback__))
-                        return JsonResponse({"detail": "invalid_image"}, status=status.HTTP_400_BAD_REQUEST)
-                    image_id = uuid.uuid1().hex
-                    image._name = image_id
-                    img = Image(original_image=image, upload_date=timezone.now(), image_owner=request.user,
-                                image_type=f"image/{image_type.lower()}")
-                    img.save()
-                    return JsonResponse({"detail": "success", "image_id": image_id}, status=status.HTTP_201_CREATED)
-            else:
-                return JsonResponse({"detail": "image_not_found"}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            logging.error(f"Exception while processing the request", e)
-            # print(e)
-            # print(traceback.print_tb(e.__traceback__))
-            return JsonResponse({"detail": "internal_server_error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return FileResponse(default_storage.open("temp/" + temp_file), content_type="image/jpeg")

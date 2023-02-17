@@ -16,8 +16,6 @@ class ImagesConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'images'
 
-
-
     def ready(self):
         global DEFAULT_IMAGE
 
@@ -25,4 +23,3 @@ class ImagesConfig(AppConfig):
             temp_io = BytesIO()
             PilImg.new("1", (512, 512)).save(temp_io, "JPEG")
             DEFAULT_IMAGE = default_storage.save(DEFAULT_IMAGE, temp_io)
-            print(DEFAULT_IMAGE)

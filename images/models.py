@@ -26,7 +26,6 @@ class ExpiringImage(models.Model):
     @staticmethod
     def find_delete_expiring_image(image_id):
         image_filter = ExpiringImage.objects.filter(expiring_image_uuid=image_id)
-        print(image_filter)
         if not image_filter.exists():
             return None
         first = image_filter.first()

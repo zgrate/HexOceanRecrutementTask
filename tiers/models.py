@@ -11,10 +11,9 @@ from images.utils import is_above_zero, is_above_or_equal_zero
 
 class ImageSize(Model):
     height = IntegerField(help_text="Must be above 0px", validators=[is_above_zero], default=0)
+
     def __str__(self):
         return f"Image of height {self.height}"
-
-
 
 
 class Tier(Model):
@@ -26,12 +25,11 @@ class Tier(Model):
     def __str__(self):
         return f"{self.tier_name}"
 
+
 def get_basic_tier():
     return Tier.objects.get_or_create(tier_name=settings.DEFAULT_TIER)[0].id
+
 
 class UserInTier(Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     tier = OneToOneField(Tier, on_delete=models.CASCADE, default=get_basic_tier)
-
-
-
