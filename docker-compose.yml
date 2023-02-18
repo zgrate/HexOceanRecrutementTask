@@ -23,6 +23,8 @@ services:
       - internal
     ports:
       - "8000:8000"
+    environment:
+      SECRET_KEY: PLEASE_CHANGE_THIS_SECRET_TO_SOMETHING_UNIQUE
     env_file:
       - ./envs/.env-backend
     command: sh -c "python manage.py runserver 0.0.0.0:8000"
