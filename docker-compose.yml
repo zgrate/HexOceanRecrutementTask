@@ -12,26 +12,22 @@ services:
       - ./envs/.env-db
     networks:
       - internal
-    healthcheck:
-      test: "exit 0"
+
 
   django_image_api:
     build:
       context: .
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     networks:
       - internal
     ports:
-      - "5002:8000"
+      - "8000:8000"
     environment:
       SECRET_KEY: PLEASE_CHANGE_THIS_SECRET_TO_SOMETHING_UNIQUE
     env_file:
       - ./envs/.env-backend
-    command: sh start_server.sh
-    volumes:
-      - /var/image_uploader/images:/var/media
+    command: sh -c "python manage.py runserver 0.0.0.0:8000"
     labels:
       ofelia.enabled: "true"
       ofelia.job-exec.cleanup-cache.schedule: "@every 30m"
@@ -40,13 +36,11 @@ services:
       ofelia.job-exec.cleanup-images.command: 'sh -c "python manage.py cleanimages'
       ofelia.job-exec.cleanup-expired.schedule: "@daily"
       ofelia.job-exec.cleanup-expired.command: 'sh -c "python manage.py cleanexpired'
-    healthcheck:
-      test: "exit 0"
+
 
 
   cleanup_worker:
     image: mcuadros/ofelia:latest
-    command: daemon --docker
     depends_on:
       - django_image_api
     volumes:
