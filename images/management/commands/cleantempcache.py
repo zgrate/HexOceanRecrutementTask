@@ -14,5 +14,6 @@ class Command(BaseCommand):
     help = 'Cleans cached images images'
 
     def handle(self, *args, **options):
-        rm("temp")
+        if default_storage.exists("temp"):
+            rm("temp")
         self.stdout.write(self.style.SUCCESS("Deleted cached images!"))
