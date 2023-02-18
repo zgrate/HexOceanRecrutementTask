@@ -1,9 +1,9 @@
 from django.conf import settings
 from django.db import models
-from django.db.models import Model, CharField, IntegerField, ManyToManyField, ManyToOneRel, ForeignKey, OneToOneField, \
+from django.db.models import Model, CharField, IntegerField, ManyToManyField, OneToOneField, \
     BooleanField
 
-from images.utils import is_above_zero, is_above_or_equal_zero
+from images.utils import is_above_zero
 
 
 # Create your models here.

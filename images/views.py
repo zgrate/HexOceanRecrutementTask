@@ -14,10 +14,8 @@ from rest_framework import status
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.reverse import reverse
-from rest_framework.status import HTTP_403_FORBIDDEN
 from rest_framework.views import APIView
 
-from HexOceanTask.settings import MIN_EXPIRE_TIME
 from images.models import Image, ExpiringImage
 from images.paginations import ImagesPagination
 from images.serializer import ImageViewSerializer

@@ -1,6 +1,5 @@
-from django.urls import path, re_path
+from django.urls import path
 
-from images import views
 from images.views import ImageView, ImageAdmin, ImageExpire
 
 urlpatterns = [

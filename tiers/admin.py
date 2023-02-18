@@ -1,10 +1,9 @@
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 
-from images.models import Image
 from tiers.models import Tier, UserInTier, ImageSize
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 
 # Register your models here.

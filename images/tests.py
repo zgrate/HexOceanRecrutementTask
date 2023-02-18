@@ -1,26 +1,21 @@
 import base64
 import io
 import json
-import tempfile
-from datetime import datetime, tzinfo
+from datetime import datetime
 from io import BytesIO
 
+from PIL import Image as PilImg
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
-from django.utils import timezone
-from django.utils.timezone import make_aware
 from freezegun import freeze_time
 from rest_framework import status
 from rest_framework.test import APIClient
 
 from HexOceanTask import settings
-from images.management.commands import cleanimages
 from images.models import Image
-from tiers.models import ImageSize, UserInTier, Tier
-from tiers.tests import TiersTests, create_default_tiers
-
-from PIL import Image as PilImg
+from tiers.models import UserInTier, Tier
+from tiers.tests import create_default_tiers
 
 
 # Create your tests here.
