@@ -1,10 +1,11 @@
-FROM python:3.9-alpine
+FROM python:3.9
 
 ENV PYTHONBUFFERED 1
 
-RUN apt-get update && apt-get install
 
-RUN apt-get install -y python-psycopg2
+RUN apt-get update
+
+RUN apt-get install -y python3-psycopg2
 
 WORKDIR /django_backend
 
@@ -14,3 +15,4 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
+COPY start_server.sh ./
