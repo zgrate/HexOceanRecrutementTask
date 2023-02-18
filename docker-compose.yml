@@ -24,7 +24,7 @@ services:
     networks:
       - internal
     ports:
-      - "5002:8000"
+      - "8000:8000"
     environment:
       SECRET_KEY: PLEASE_CHANGE_THIS_SECRET_TO_SOMETHING_UNIQUE
     env_file:
