@@ -24,7 +24,7 @@ from tiers.models import UserInTier
 
 # Create your views here.
 
-class ImageAdmin(APIView):
+class   ImageAdmin(APIView):
     pagination_class = ImagesPagination
     authentication_classes = [BasicAuthentication]
     permission_classes = [IsAuthenticated]
@@ -77,7 +77,7 @@ class ImageExpire(APIView):
             return JsonResponse({"detail": "image_not_found"}, status=status.HTTP_400_BAD_REQUEST)
 
         expire_time = settings.DEFAULT_EXPIRE_TIME
-        if "expire_time" in request.data:
+        if "expire_time" in request.data and request.data['expire_time']:
             expire_time = int(request.data['expire_time'])
             if expire_time < settings.MIN_EXPIRE_TIME:
                 return JsonResponse({"detail": "expire_must_be_above", "value": settings.MIN_EXPIRE_TIME}, status=status.HTTP_400_BAD_REQUEST)
@@ -110,6 +110,7 @@ class ImageView(APIView):
         else:
             image = (filter.first())
         tier = UserInTier.objects.get_or_create(user=image.image_owner)[0].tier
+        print(size)
         if size == "" or size == "original":
             if tier.can_access_original:
                 return FileResponse(image.original_image.open(), content_type=image.image_type,
@@ -117,6 +118,8 @@ class ImageView(APIView):
             else:
                 return JsonResponse({"detail": "tier_too_low"}, status=status.HTTP_403_FORBIDDEN)
         else:
+            if not size.isdigit():
+                return JsonResponse({"detail": "not_a_digit"})
             new_height = int(size)
             if not tier.allowed_sizes.filter(height=new_height).exists():
                 return JsonResponse({"detail": "size_not_supported"}, status=status.HTTP_403_FORBIDDEN)

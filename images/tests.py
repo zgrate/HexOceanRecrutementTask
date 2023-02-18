@@ -87,7 +87,6 @@ class ImageUploadTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-
 class ImageViewTest(TestCase):
 
     def setUp(self):
@@ -100,6 +99,12 @@ class ImageViewTest(TestCase):
         self.test2_photo = put_image("test2", "password")
         pass
 
+    def test_list_images(self):
+        self.client.credentials(HTTP_AUTHORIZATION=generate_base_64_basic_auth("test", "password"))
+        response = self.client.get("/images/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        content = json.loads(response.content.decode())
+        print(content)
     def test_download_original(self):
         response = (self.client.get("/images/" + self.test2_photo))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
