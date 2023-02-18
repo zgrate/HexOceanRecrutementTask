@@ -9,19 +9,15 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
-
+from pathlib import Path
 
 import environ
 
 env = environ.Env()
-environ.Env.read_env()
-
-
-from pathlib import Path
+environ.Env.read_env(".env")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -88,7 +84,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'HexOceanTask.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
@@ -102,7 +97,6 @@ DATABASES = {
         'PORT': env("DATABASE_PORT"),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -122,7 +116,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
@@ -133,7 +126,6 @@ TIME_ZONE = env("TIMEZONE")
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
@@ -159,7 +151,7 @@ CACHES = {
     }
 }
 
-CATCH_DURATION = 60*5
+CATCH_DURATION = 60 * 5
 
 DEFAULT_EXPIRE_TIME = int(env('DEFAULT_EXPIRE_TIME'))
 MAX_EXPIRE_TIME = int(env("MAX_EXPIRE_TIME"))
